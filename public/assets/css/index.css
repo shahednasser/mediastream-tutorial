@@ -4,6 +4,13 @@
   border-color: #f3f3f3 !important;
 }
 
-.record-button:hover {
+.record-button:hover,
+.play-button:hover {
   box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+
+.play-button {
+  height: 8em;
+  width: 8em;
+  background-color: #5084d2;
 }

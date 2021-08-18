@@ -4,9 +4,11 @@ const recordButtonImage = recordButton.firstElementChild;
 const recordedAudioContainer = document.getElementById('recordedAudioContainer');
 const saveAudioButton = document.getElementById('saveButton');
 const discardAudioButton = document.getElementById('discardButton');
+const recordingsContainer = document.getElementById('recordings');
 
 let chunks = []; //will be used later to record audio
 let mediaRecorder = null; //will be used later to record audio
+let audioBlob = null; //the blob that will hold the recorded audio
 
 function record () {
   //check if browser supports getUserMedia
@@ -51,8 +53,8 @@ function mediaRecorderStop () {
   }
   const audioElm = document.createElement('audio');
   audioElm.setAttribute('controls', ''); //add controls
-  const blob = new Blob(chunks, { 'type' : 'audio/mp3' });
-  const audioURL = window.URL.createObjectURL(blob);
+  audioBlob = new Blob(chunks, { 'type' : 'audio/mp3' });
+  const audioURL = window.URL.createObjectURL(audioBlob);
   audioElm.src = audioURL;
   //show audio
   recordedAudioContainer.insertBefore(audioElm, recordedAudioContainer.firstElementChild);
@@ -66,7 +68,23 @@ function mediaRecorderStop () {
 recordButton.addEventListener('click', record);
 
 function saveRecording () {
-  //TODO upload recording to the server
+  const formData = new FormData;
+  formData.append('audio', audioBlob, 'recording.mp3');
+  fetch("/record", {
+    method: 'POST',
+    body: formData
+  })
+  .then((response) => response.json())
+  .then((response) => {
+    alert("Your recording is saved");
+    resetRecording();
+    fetchRecordings();
+  })
+  .catch((err) => {
+    console.error(err);
+    alert("An error occurred, please try again later");
+    resetRecording();
+  })
 }
 
 saveAudioButton.addEventListener('click', saveRecording);
@@ -74,13 +92,77 @@ saveAudioButton.addEventListener('click', saveRecording);
 function discardRecording () {
   if (confirm('Are you sure you want to discard the recording?')) {
     //discard audio just recorded
-    if (recordedAudioContainer.firstElementChild.tagName === 'AUDIO') {
-      recordedAudioContainer.firstElementChild.remove();
-      //hide recordedAudioContainer
-      recordedAudioContainer.classList.add('d-none');
-      recordedAudioContainer.classList.remove('d-flex');
+    resetRecording();
+  }
+}
+
+function resetRecording () {
+  if (recordedAudioContainer.firstElementChild.tagName === 'AUDIO') {
+    recordedAudioContainer.firstElementChild.remove();
+    //hide recordedAudioContainer
+    recordedAudioContainer.classList.add('d-none');
+    recordedAudioContainer.classList.remove('d-flex');
+  }
+  audioBlob = null;
+}
+
+discardAudioButton.addEventListener('click', discardRecording);
+
+//fetch recordings
+function fetchRecordings () {
+  fetch('/recordings')
+  .then((response) => response.json())
+  .then((response) => {
+    if (response.success && response.files) {
+      recordingsContainer.innerHTML = ''; //remove all children
+      response.files.forEach((file) => {
+        const recordingElement = createRecordingElement(file);
+        //console.log(file, recordingElement);
+        recordingsContainer.appendChild(recordingElement);
+      })
+    }
+  })
+  .catch((err) => console.error(err))
+}
+
+function createRecordingElement (file) {
+  const recordingElement = document.createElement('div');
+  recordingElement.classList.add('col-lg-2', 'col', 'recording', 'mt-3');
+  const audio = document.createElement('audio');
+  //audio.setAttribute('controls', '');
+  audio.src = file;
+  audio.onended = function (e) {
+    e.target.nextElementSibling.firstElementChild.src = 'images/play.png';
+  };
+  recordingElement.appendChild(audio);
+  const playButton = document.createElement('button');
+  playButton.classList.add('play-button', 'btn', 'border', 'shadow-sm', 'text-center', 'd-block', 'mx-auto');
+  const playImage = document.createElement('img');
+  playImage.src = '/images/play.png';
+  playImage.classList.add('img-fluid');
+  playButton.appendChild(playImage);
+  playButton.addEventListener('click', playRecording);
+  recordingElement.appendChild(playButton);
+  return recordingElement;
+}
+
+function playRecording (e) {
+  let button = e.target;
+  if (button.tagName === 'IMG') {
+    //get parent button
+    button = button.parentElement;
+  }
+  const audio = button.previousElementSibling;
+  console.log(button, audio)
+  if (audio && audio.tagName === 'AUDIO') {
+    if (audio.paused) {
+      audio.play();
+      button.firstElementChild.src = 'images/pause.png';
+    } else {
+      audio.pause();
+      button.firstElementChild.src = 'images/play.png';
     }
   }
 }
 
-discardAudioButton.addEventListener('click', discardRecording);
+fetchRecordings();

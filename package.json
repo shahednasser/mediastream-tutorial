@@ -18,6 +18,7 @@
   "homepage": "https://github.com/shahednasser/mediastream-tutorial#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "multer": "^1.4.3",
     "nodemon": "^2.0.12"
   }
 }
