@@ -1,0 +1,23 @@
+{
+  "name": "mediastream-tutorial",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shahednasser/mediastream-tutorial.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shahednasser/mediastream-tutorial/issues"
+  },
+  "homepage": "https://github.com/shahednasser/mediastream-tutorial#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.12"
+  }
+}
